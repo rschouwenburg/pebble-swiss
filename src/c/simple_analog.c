@@ -4,7 +4,7 @@
 #include <ctype.h>
 
 static Window *s_window;
-static Layer *s_simple_bg_layer, *s_ticks_layer, *s_hands_layer, *s_date_layer, *s_bluetooth_layer;
+static Layer *s_simple_bg_layer, *s_ticks_layer, *s_hands_layer, *s_date_layer, *s_bluetooth_layer, *s_bat_icon_layer;
 
 static GPath *s_bt_icon_gpath;
 
@@ -21,6 +21,7 @@ int date = 0;
 int ticks = 1;
 int color = 0;
 int bluetooth = 0;
+int battery = 0;
 
 char *upcase(char *str) {
     char *s = str;
@@ -35,21 +36,13 @@ char *upcase(char *str) {
 static void create_ticks(Layer *layer)
 { 
   GRect bounds = layer_get_bounds(layer);
-#if defined(PBL_RECT)
-  if ( color == 0 )
-  {
-    s_tick_sprite_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_TICK20_INV_SPRITE);
-  } else {
-    s_tick_sprite_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_TICK20_SPRITE);
-  }
-#elif defined(PBL_ROUND) 
+  
   if ( color == 0 )
   {
     s_tick_sprite_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_TICK_SPRITE_24_WOB);
   } else {
     s_tick_sprite_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_TICK_SPRITE_24_BOW);
   }
-#endif
     
   layer_remove_child_layers(layer);
   
@@ -61,9 +54,40 @@ static void create_ticks(Layer *layer)
       int16_t angle = i * 30;
 
 #if defined(PBL_RECT)      
-      GPoint point = gpoint_from_polar(GRect(1, 0, bounds.size.w - 19, bounds.size.h - 38), GOvalScaleModeFitCircle, DEG_TO_TRIGANGLE(angle));
-      s_tick_bitmap[i] = gbitmap_create_as_sub_bitmap(s_tick_sprite_bitmap, TICK20_SPRITE_DEF[i]);
-      s_ticks_layers[i] = bitmap_layer_create(GRect(point.x-5, point.y+5, 30, 30));
+      GPoint point = gpoint_from_polar(GRect(0, 0, bounds.size.w * 1.05, bounds.size.h * 1.05), GOvalScaleModeFitCircle, DEG_TO_TRIGANGLE(angle));
+      s_tick_bitmap[i] = gbitmap_create_as_sub_bitmap(s_tick_sprite_bitmap, TICK_SPRITE_24_DEF[i]);
+      
+      point.x = point.x - ( TICK_SPRITE_24_DEF[i].size.w / 2);
+      point.y = point.y - ( TICK_SPRITE_24_DEF[i].size.h / 2);
+      
+      if ( i == 11 || i == 0 || i == 1 )
+      {
+        point.y = 6;
+      }
+      if ( i == 2 || i == 3 || i == 4 )
+      {
+        point.x = bounds.size.w - 5 - TICK_SPRITE_24_DEF[i].size.w;
+        point.y = point.y - 2;
+      }
+      if ( i == 5 || i == 6 || i == 7 )
+      {
+        point.y = bounds.size.h - 6 - TICK_SPRITE_24_DEF[i].size.h;
+      }
+      if ( i == 8 || i == 9 || i == 10 )
+      {
+        point.x = 5;
+        point.y = point.y - 2;
+      }
+      if ( i == 0 || i == 6 )
+      {
+        point.x = point.x - 2;
+      }
+      if ( i == 6 )
+      {
+        point.y = point.y + 1;
+      }
+      
+      s_ticks_layers[i] = bitmap_layer_create(GRect(point.x, point.y, TICK_SPRITE_24_DEF[i].size.w, TICK_SPRITE_24_DEF[i].size.h));
 #elif defined(PBL_ROUND)
       GPoint point = gpoint_from_polar(GRect(0, 0, bounds.size.w - 29, bounds.size.h - 38), GOvalScaleModeFitCircle, DEG_TO_TRIGANGLE(angle));
       s_tick_bitmap[i] = gbitmap_create_as_sub_bitmap(s_tick_sprite_bitmap, TICK_SPRITE_24_DEF[i]);
@@ -95,6 +119,7 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
   Tuple *ticks_key = dict_find(iter, MESSAGE_KEY_KEY_TICKS);
   Tuple *color_key = dict_find(iter, MESSAGE_KEY_KEY_COLOR);
   Tuple *bluetooth_key = dict_find(iter, MESSAGE_KEY_KEY_BLUETOOTH);
+  Tuple *battery_key = dict_find(iter, MESSAGE_KEY_KEY_BATTERY);
   
   vibrate = vibrate_key->value->int32;
   second = second_key->value->int32;
@@ -102,6 +127,7 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
   ticks = ticks_key->value->int32;
   color = color_key->value->int32;
   bluetooth = bluetooth_key->value->uint8 - 48;
+  battery = battery_key->value->uint8 - 48;
 
   persist_write_int(MESSAGE_KEY_KEY_VIBRATE, vibrate_key->value->int32);
   APP_LOG(APP_LOG_LEVEL_DEBUG, "vibrate = %d", vibrate);
@@ -120,6 +146,9 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
   
   persist_write_int(MESSAGE_KEY_KEY_BLUETOOTH, bluetooth);
   APP_LOG(APP_LOG_LEVEL_DEBUG, "bluetooth = %d", bluetooth);
+  
+  persist_write_int(MESSAGE_KEY_KEY_BATTERY, battery);
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "battery = %d", battery);
   
   if ( second == 1 ) {
     tick_timer_service_subscribe(SECOND_UNIT, handle_second_tick);
@@ -141,6 +170,13 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
     layer_set_hidden(s_bluetooth_layer, false);
   }
   layer_mark_dirty(s_bluetooth_layer);
+  
+  if ( battery == 2 ) {
+    layer_set_hidden(s_bat_icon_layer, true);
+  } else {
+    layer_set_hidden(s_bat_icon_layer, false);
+  }
+  layer_mark_dirty(s_bat_icon_layer);
 }
 
 static void bluetooth_callback(bool connected) {
@@ -152,6 +188,59 @@ static void bluetooth_callback(bool connected) {
     first_run = 0;
   
   layer_mark_dirty(s_bluetooth_layer);
+}
+
+static void bat_update_proc(Layer *layer, GContext *ctx)
+{ 
+  if ( battery == 2 ) {
+    layer_set_hidden(layer, true);
+  } else {
+    layer_set_hidden(layer, false);
+    BatteryChargeState bat = battery_state_service_peek();
+    
+    int bat_charge = 0;
+    GColor8 circle_color = GColorBlack;
+    GColor8 sup_circle_color = GColorPastelYellow;
+    GColor8 dot_color = GColorBlue;
+    
+    if ( bat.is_charging ) {
+      bat_charge = 100;
+      circle_color = GColorIslamicGreen;
+    } else {
+      bat_charge = bat.charge_percent;    
+      
+      if ( bat_charge > 10 )
+      {
+        if ( color == 0 )
+        {
+          circle_color = GColorWhite;
+          sup_circle_color = GColorDarkGray;
+          dot_color = GColorVividCerulean;
+        }
+      } else {
+        bat_charge = 100;
+        circle_color = GColorRed;
+      }
+    }
+    
+    if ( battery == 1 || ( battery == 0 && bat.charge_percent <= 10 ) )
+    {
+      GRect bounds = layer_get_bounds(layer);
+      int16_t x = bounds.size.w / 2 - 12;
+      int16_t y = bounds.size.h / 4 - 4 + 2;
+      int32_t end = DEG_TO_TRIGANGLE(bat_charge * 36 / 10);
+      int32_t dot = DEG_TO_TRIGANGLE( (bat_charge - 2) * 36 / 10);      
+      
+      graphics_context_set_stroke_width(ctx, 2);
+      graphics_context_set_stroke_color(ctx, sup_circle_color);
+      graphics_draw_arc(ctx, GRect(x, y, 26, 26), GOvalScaleModeFillCircle, 0, DEG_TO_TRIGANGLE(360));
+      graphics_context_set_stroke_color(ctx, circle_color);
+      graphics_draw_arc(ctx, GRect(x, y, 26, 26), GOvalScaleModeFillCircle, 0, end);
+      graphics_context_set_stroke_width(ctx, 4);
+      graphics_context_set_stroke_color(ctx, dot_color);
+      graphics_draw_arc(ctx, GRect(x, y, 26, 26), GOvalScaleModeFillCircle, dot, end);
+    }
+  }
 }
 
 static void bluetooth_update_proc(Layer *layer, GContext *ctx)
@@ -212,14 +301,20 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
   t->tm_min = 9; 
   t->tm_hour = 10;
 #endif
+  
+  // TESTING SETUP  
+  //t->tm_sec = 45;
+  //t->tm_min = 15;
+  //t->tm_hour = 7;
 
+  // second hand
   int32_t second_angle = TRIG_MAX_ANGLE * t->tm_sec / 60;
   GPoint second_hand = {
     .x = (int16_t)(sin_lookup(second_angle) * (int32_t)second_hand_length / TRIG_MAX_RATIO) + center.x,
     .y = (int16_t)(-cos_lookup(second_angle) * (int32_t)second_hand_length / TRIG_MAX_RATIO) + center.y,
   };
   GPoint second_hand_start = {
-    .x = center.x - (int16_t)(sin_lookup(second_angle) *  (int32_t)second_hand_length_back / TRIG_MAX_RATIO),
+   .x = center.x - (int16_t)(sin_lookup(second_angle) *  (int32_t)second_hand_length_back / TRIG_MAX_RATIO),
     .y = center.y - (int16_t)(-cos_lookup(second_angle) * (int32_t)second_hand_length_back / TRIG_MAX_RATIO),
   };
   
@@ -302,6 +397,28 @@ static void window_load(Window *window) {
   s_simple_bg_layer = layer_create(bounds);
   layer_set_update_proc(s_simple_bg_layer, bg_update_proc);
   layer_add_child(window_layer, s_simple_bg_layer);
+  
+  s_bat_icon_layer = layer_create(bounds);
+  layer_set_update_proc(s_bat_icon_layer, bat_update_proc);
+  layer_add_child(window_layer, s_bat_icon_layer);
+ 
+  // BLUETOOTH LAYER
+  int16_t x = bounds.size.w / 2 - 4;
+  int16_t y = bounds.size.h / 4 + 2;
+    
+  s_bt_icon_gpath = gpath_create(&BT_ICON_PATH);
+  gpath_move_to(s_bt_icon_gpath, GPoint(x,y));
+  
+  s_bluetooth_layer = layer_create(bounds);
+  if ( bluetooth == 2 ) {
+    layer_set_hidden(s_bluetooth_layer, true);
+  } else {
+    layer_set_hidden(s_bluetooth_layer, false);
+  }
+  layer_set_update_proc(s_bluetooth_layer, bluetooth_update_proc);
+  layer_add_child(window_layer, s_bluetooth_layer);
+  
+  bluetooth_callback(connection_service_peek_pebble_app_connection());
  
   s_ticks_layer = layer_create(bounds);
   layer_add_child(window_layer, s_ticks_layer);
@@ -319,12 +436,13 @@ static void window_load(Window *window) {
   layer_add_child(window_layer, s_hands_layer);
 
 #if defined(PBL_RECT)
-  int x = bounds.size.w / 2;
-  int y = bounds.size.h / 10 * 6; // 60% of height
-  s_num_label = text_layer_create(GRect(120, 67, 25, 28));
+  x = bounds.size.w / 2;
+  y = bounds.size.h / 10 * 6.5 + 2; // 65% of height
+  s_num_label = text_layer_create(GRect(x + 9, y, 50, y+20));
+  s_day_label = text_layer_create(GRect(x - 45, y, 50, y+20));
 #elif defined(PBL_ROUND)
-  int x = bounds.size.w / 2;
-  int y = bounds.size.h / 10 * 5.8; // 60% of height
+  x = bounds.size.w / 2;
+  y = bounds.size.h / 10 * 5.8 + 1; // 60% of height
   s_num_label = text_layer_create(GRect(x + 9, y, 50, y+20));
   s_day_label = text_layer_create(GRect(x - 45, y, 50, y+20));
 #endif
@@ -340,24 +458,6 @@ static void window_load(Window *window) {
   text_layer_set_text_alignment(s_day_label, GTextAlignmentRight);
   text_layer_set_font(s_day_label, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
   layer_add_child(s_date_layer, text_layer_get_layer(s_day_label)); 
-  
-  // BLUETOOTH LAYER
-  x = bounds.size.w / 2 - 4;
-  y = bounds.size.h / 4;
-    
-  s_bt_icon_gpath = gpath_create(&BT_ICON_PATH);
-  gpath_move_to(s_bt_icon_gpath, GPoint(x,y));
-  
-  s_bluetooth_layer = layer_create(bounds);
-  if ( bluetooth == 2 ) {
-    layer_set_hidden(s_bluetooth_layer, true);
-  } else {
-    layer_set_hidden(s_bluetooth_layer, false);
-  }
-  layer_set_update_proc(s_bluetooth_layer, bluetooth_update_proc);
-  layer_add_child(window_layer, s_bluetooth_layer);
-  
-  bluetooth_callback(connection_service_peek_pebble_app_connection());
 }
 
 static void window_unload(Window *window) {
@@ -380,6 +480,8 @@ static void init() {
     color = persist_read_int(MESSAGE_KEY_KEY_COLOR);
   if ( persist_exists(MESSAGE_KEY_KEY_BLUETOOTH) )
     bluetooth = persist_read_int(MESSAGE_KEY_KEY_BLUETOOTH);
+  if ( persist_exists(MESSAGE_KEY_KEY_BATTERY) )
+    battery = persist_read_int(MESSAGE_KEY_KEY_BATTERY);
   
   s_window = window_create();
   window_set_window_handlers(s_window, (WindowHandlers) {

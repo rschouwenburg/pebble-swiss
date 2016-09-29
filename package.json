@@ -24,9 +24,18 @@
         "resources": {
             "media": [
                 {
+                    "file": "images/swiss train clock-icon-25.png",
+                    "menuIcon": true,
+                    "name": "IMAGE_MENU",
+                    "targetPlatforms": null,
+                    "type": "bitmap"
+                },
+                {
                     "file": "images/roboto-numbers-24px-black-on-white.png",
                     "name": "IMAGE_TICK_SPRITE_24_BOW",
                     "targetPlatforms": [
+                        "aplite",
+                        "basalt",
                         "chalk"
                     ],
                     "type": "bitmap"
@@ -35,55 +44,16 @@
                     "file": "images/roboto-numbers-24px-white-on-black.png",
                     "name": "IMAGE_TICK_SPRITE_24_WOB",
                     "targetPlatforms": [
-                        "chalk"
-                    ],
-                    "type": "bitmap"
-                },
-                {
-                    "file": "images/roboto-numbers-22px-white-on-black.png",
-                    "name": "IMAGE_TICK_SPRITE_22_WOB",
-                    "targetPlatforms": [
-                        "chalk"
-                    ],
-                    "type": "bitmap"
-                },
-                {
-                    "file": "images/roboto-numbers-22px-black-on-white.png",
-                    "name": "IMAGE_TICK_SPRITE_22_BOW",
-                    "targetPlatforms": [
-                        "chalk"
-                    ],
-                    "type": "bitmap"
-                },
-                {
-                    "file": "images/numbers-aa-20px-inverted.png",
-                    "name": "IMAGE_TICK20_INV_SPRITE",
-                    "targetPlatforms": [
                         "aplite",
-                        "basalt"
+                        "basalt",
+                        "chalk"
                     ],
-                    "type": "bitmap"
-                },
-                {
-                    "file": "images/numbers-aa-20px.png",
-                    "name": "IMAGE_TICK20_SPRITE",
-                    "targetPlatforms": [
-                        "aplite",
-                        "basalt"
-                    ],
-                    "type": "bitmap"
-                },
-                {
-                    "file": "images/swiss train clock-icon-28.png",
-                    "menuIcon": true,
-                    "name": "IMAGE_MENU",
                     "type": "bitmap"
                 }
             ]
         },
         "sdkVersion": "3",
         "targetPlatforms": [
-            "aplite",
             "basalt",
             "chalk"
         ],
@@ -92,5 +62,5 @@
             "watchface": true
         }
     },
-    "version": "3.0.0"
+    "version": "3.2.0"
 }
