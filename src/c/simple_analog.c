@@ -162,6 +162,7 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
     layer_set_hidden(s_date_layer, true);
   }
   
+  layer_mark_dirty(s_simple_bg_layer);
   create_ticks(s_ticks_layer);
   
   if ( bluetooth == 2 ) {
