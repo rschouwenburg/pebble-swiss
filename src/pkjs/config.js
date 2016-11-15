@@ -4,7 +4,7 @@ module.exports =
   {
     "type": "heading",
     "id": "main-heading",
-    "defaultValue": "SWISS CONFIGURATION",
+    "defaultValue": "SWISS SETTINGS",
     "size": 1
   },
   {
