@@ -36,7 +36,8 @@
                     "targetPlatforms": [
                         "aplite",
                         "basalt",
-                        "chalk"
+                        "chalk",
+                        "emery"
                     ],
                     "type": "bitmap"
                 },
@@ -46,7 +47,8 @@
                     "targetPlatforms": [
                         "aplite",
                         "basalt",
-                        "chalk"
+                        "chalk",
+                        "emery"
                     ],
                     "type": "bitmap"
                 }
@@ -55,7 +57,8 @@
         "sdkVersion": "3",
         "targetPlatforms": [
             "basalt",
-            "chalk"
+            "chalk",
+            "emery"
         ],
         "uuid": "338b435d-367f-4feb-a8f6-0bca712566e0",
         "watchapp": {
