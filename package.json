@@ -4,12 +4,12 @@
         "pebble-clay": "^1.0.2"
     },
     "keywords": [],
-    "name": "swiss-dark",
+    "name": "swiss",
     "pebble": {
         "capabilities": [
             "configurable"
         ],
-        "displayName": "SWISS DARK",
+        "displayName": "SWISS",
         "enableMultiJS": true,
         "messageKeys": [
             "KEY_VIBRATE",
@@ -62,5 +62,5 @@
             "watchface": true
         }
     },
-    "version": "3.3.0"
+    "version": "3.4.0"
 }
